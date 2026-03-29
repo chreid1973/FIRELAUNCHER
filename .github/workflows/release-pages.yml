@@ -1,0 +1,177 @@
+name: Release APK and Deploy Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release label shown on the site and GitHub Release (example: 1.1.0-beta)
+        required: true
+        type: string
+      prerelease:
+        description: Mark this GitHub Release as a prerelease
+        required: true
+        default: true
+        type: boolean
+      notes:
+        description: Optional release notes body
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Prepare signing files
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${ANDROID_KEYSTORE_BASE64:-}" ] || [ -z "${ANDROID_KEYSTORE_PASSWORD:-}" ] || [ -z "${ANDROID_KEY_ALIAS:-}" ] || [ -z "${ANDROID_KEY_PASSWORD:-}" ]; then
+            echo "Missing Android signing secrets. Configure ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, and ANDROID_KEY_PASSWORD." >&2
+            exit 1
+          fi
+
+          mkdir -p signing
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > signing/release.jks
+
+          cat > keystore.properties <<EOF
+          storeFile=signing/release.jks
+          storePassword=${ANDROID_KEYSTORE_PASSWORD}
+          keyAlias=${ANDROID_KEY_ALIAS}
+          keyPassword=${ANDROID_KEY_PASSWORD}
+          EOF
+
+          sdk_path="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          if [ -n "$sdk_path" ]; then
+            echo "sdk.dir=$sdk_path" > local.properties
+          else
+            : > local.properties
+          fi
+
+          if [ -n "${TMDB_API_KEY:-}" ]; then
+            echo "threehpm.tmdbApiKey=${TMDB_API_KEY}" >> local.properties
+          fi
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease
+
+      - name: Create GitHub Release and site metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_NOTES: ${{ inputs.notes }}
+          PRERELEASE: ${{ inputs.prerelease }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          APK_PATH="app/build/outputs/apk/release/app-release.apk"
+          SAFE_VERSION="$(echo "$RELEASE_VERSION" | tr ' /' '--' | tr -cd '[:alnum:]._-')"
+          TAG="v${SAFE_VERSION}"
+          ASSET_NAME="FireLauncher-${SAFE_VERSION}.apk"
+          RELEASE_TITLE="FireLauncher ${RELEASE_VERSION}"
+          SHA_FILE="SHA256SUMS.txt"
+
+          cp "$APK_PATH" "$ASSET_NAME"
+          SIZE_BYTES="$(stat -c%s "$ASSET_NAME")"
+          SHA256="$(sha256sum "$ASSET_NAME" | awk '{print toupper($1)}')"
+          PUBLISHED_AT="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          DOWNLOAD_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${ASSET_NAME}"
+          RELEASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
+
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            if [ -n "$RELEASE_NOTES" ]; then
+              if [ "$PRERELEASE" = "true" ]; then
+                gh release edit "$TAG" --title "$RELEASE_TITLE" --prerelease --notes "$RELEASE_NOTES"
+              else
+                gh release edit "$TAG" --title "$RELEASE_TITLE" --notes "$RELEASE_NOTES"
+              fi
+            else
+              if [ "$PRERELEASE" = "true" ]; then
+                gh release edit "$TAG" --title "$RELEASE_TITLE" --prerelease
+              else
+                gh release edit "$TAG" --title "$RELEASE_TITLE"
+              fi
+            fi
+          else
+            if [ -n "$RELEASE_NOTES" ]; then
+              if [ "$PRERELEASE" = "true" ]; then
+                gh release create "$TAG" "$ASSET_NAME#${ASSET_NAME}" --title "$RELEASE_TITLE" --prerelease --notes "$RELEASE_NOTES"
+              else
+                gh release create "$TAG" "$ASSET_NAME#${ASSET_NAME}" --title "$RELEASE_TITLE" --notes "$RELEASE_NOTES"
+              fi
+            else
+              if [ "$PRERELEASE" = "true" ]; then
+                gh release create "$TAG" "$ASSET_NAME#${ASSET_NAME}" --title "$RELEASE_TITLE" --prerelease --generate-notes
+              else
+                gh release create "$TAG" "$ASSET_NAME#${ASSET_NAME}" --title "$RELEASE_TITLE" --generate-notes
+              fi
+            fi
+          fi
+
+          printf "%s  %s\n" "$SHA256" "$ASSET_NAME" > "$SHA_FILE"
+          gh release upload "$TAG" "$ASSET_NAME#${ASSET_NAME}" --clobber
+          gh release upload "$TAG" "$SHA_FILE#${SHA_FILE}" --clobber
+
+          export TAG ASSET_NAME SIZE_BYTES PUBLISHED_AT SHA256 DOWNLOAD_URL RELEASE_URL RELEASE_VERSION
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = {
+              "version": os.environ["RELEASE_VERSION"],
+              "tag": os.environ["TAG"],
+              "assetName": os.environ["ASSET_NAME"],
+              "sizeBytes": int(os.environ["SIZE_BYTES"]),
+              "publishedAt": os.environ["PUBLISHED_AT"],
+              "sha256": os.environ["SHA256"],
+              "downloadUrl": os.environ["DOWNLOAD_URL"],
+              "releaseUrl": os.environ["RELEASE_URL"],
+              "packageName": "com.threehpm.firelauncher",
+          }
+
+          target = Path("ppv_download_site/latest.json")
+          target.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+          PY
+
+          rm -f ppv_download_site/*.apk
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ppv_download_site
+
+  deploy-pages:
+    needs: build-and-package
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

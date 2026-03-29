@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FireLauncher Test Build</title>
+    <title>FireLauncher Releases</title>
     <meta
         name="description"
-        content="Download the latest FireLauncher test APK for Fire TV and Android TV."
+        content="Download the latest FireLauncher APK for Fire TV and Android TV."
     >
     <style>
         :root {
@@ -277,34 +277,37 @@
     <main class="page">
         <section class="hero">
             <div class="hero-copy">
-                <div class="eyebrow">FireLauncher Test Build</div>
-                <h1>Download FireLauncher for testing</h1>
+                <div class="eyebrow">FireLauncher Releases</div>
+                <h1>Download the latest FireLauncher build</h1>
                 <p class="lead">
-                    This is a test APK for Fire TV and Android TV users. Install it manually,
-                    open it like a normal app, and send feedback on layout, navigation,
-                    performance, wallpapers, and overall polish.
+                    This page tracks the most recent FireLauncher APK build with live release
+                    metadata. Install it manually on Fire TV or Android TV, then test layout,
+                    navigation, performance, wallpapers, feeds, and overall polish.
                 </p>
 
                 <div class="meta-grid">
                     <div class="meta-card">
                         <span class="meta-label">Version</span>
-                        <span class="meta-value">1.1.0 beta</span>
+                        <span class="meta-value" id="versionValue">1.1.0 beta</span>
                     </div>
                     <div class="meta-card">
                         <span class="meta-label">APK Size</span>
-                        <span class="meta-value">15.439 MB</span>
+                        <span class="meta-value" id="sizeValue">15.439 MB</span>
                     </div>
                     <div class="meta-card">
                         <span class="meta-label">Updated</span>
-                        <span class="meta-value">March 29, 2026</span>
+                        <span class="meta-value" id="updatedValue">March 29, 2026</span>
                     </div>
                 </div>
 
                 <div class="actions">
-                    <a class="button button-primary" href="./app-release.apk" download>
+                    <a class="button button-primary" id="downloadButton" href="https://github.com/chreid1973/FIRELAUNCHER/releases">
                         Download APK
                     </a>
-                    <a class="button button-secondary" href="https://3hpm.ca/ppv/launcher-preview.png" target="_blank" rel="noopener">
+                    <a class="button button-secondary" id="releaseNotesButton" href="https://github.com/chreid1973/FIRELAUNCHER/releases" target="_blank" rel="noopener">
+                        View Releases
+                    </a>
+                    <a class="button button-secondary" href="./launcher-preview.png" target="_blank" rel="noopener">
                         View Screenshot
                     </a>
                 </div>
@@ -349,7 +352,7 @@
                 </ul>
 
                 <h2 style="margin-top: 24px;">SHA-256</h2>
-                <code>46446F5171C6F87A7E42D1940BDB8E5B9ACDC1749416E918520336968CA78A8C</code>
+                <code id="hashValue">46446F5171C6F87A7E42D1940BDB8E5B9ACDC1749416E918520336968CA78A8C</code>
             </aside>
         </section>
 
@@ -358,5 +361,62 @@
             device allows APK installs from your downloader or browser app first.
         </p>
     </main>
+    <script>
+        const fallbackRelease = {
+            version: "1.1.0 beta",
+            sizeBytes: 15439260,
+            publishedAt: "2026-03-29T14:23:57-06:00",
+            sha256: "46446F5171C6F87A7E42D1940BDB8E5B9ACDC1749416E918520336968CA78A8C",
+            downloadUrl: "https://github.com/chreid1973/FIRELAUNCHER/releases",
+            releaseUrl: "https://github.com/chreid1973/FIRELAUNCHER/releases"
+        };
+
+        function formatSize(sizeBytes) {
+            if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) {
+                return "Unknown";
+            }
+            return `${(sizeBytes / 1000000).toFixed(3)} MB`;
+        }
+
+        function formatDate(value) {
+            const parsed = new Date(value);
+            if (Number.isNaN(parsed.getTime())) {
+                return value || "Unknown";
+            }
+            return new Intl.DateTimeFormat(undefined, {
+                month: "long",
+                day: "numeric",
+                year: "numeric"
+            }).format(parsed);
+        }
+
+        function applyReleaseData(data) {
+            const release = { ...fallbackRelease, ...data };
+            document.getElementById("versionValue").textContent = release.version || fallbackRelease.version;
+            document.getElementById("sizeValue").textContent = formatSize(Number(release.sizeBytes));
+            document.getElementById("updatedValue").textContent = formatDate(release.publishedAt);
+            document.getElementById("hashValue").textContent = release.sha256 || fallbackRelease.sha256;
+
+            const downloadButton = document.getElementById("downloadButton");
+            const releaseNotesButton = document.getElementById("releaseNotesButton");
+            downloadButton.href = release.downloadUrl || fallbackRelease.downloadUrl;
+            releaseNotesButton.href = release.releaseUrl || fallbackRelease.releaseUrl;
+        }
+
+        async function loadReleaseData() {
+            try {
+                const response = await fetch(`./latest.json?ts=${Date.now()}`, { cache: "no-store" });
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const data = await response.json();
+                applyReleaseData(data);
+            } catch (_) {
+                applyReleaseData(fallbackRelease);
+            }
+        }
+
+        loadReleaseData();
+    </script>
 </body>
 </html>
