@@ -6,15 +6,16 @@ on:
       version:
         description: Release label shown on the site and GitHub Release (example: 1.1.0-beta)
         required: true
-        default: 1.1.0-beta
+        type: string
       prerelease:
-        description: Set to true to mark this GitHub Release as a prerelease
+        description: Mark this GitHub Release as a prerelease
         required: true
-        default: "true"
+        default: true
+        type: boolean
       notes:
         description: Optional release notes body
         required: false
-        default: ""
+        type: string
 
 permissions:
   contents: write
@@ -168,8 +169,10 @@ jobs:
       id-token: write
     environment:
       name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
