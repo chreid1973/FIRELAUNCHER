@@ -245,6 +245,21 @@
             text-align: center;
         }
 
+        .redirect-notice {
+            display: none;
+            margin-bottom: 18px;
+            padding: 14px 18px;
+            border-radius: 18px;
+            background: rgba(115, 182, 255, 0.1);
+            border: 1px solid rgba(115, 182, 255, 0.22);
+            color: #d6e9ff;
+            line-height: 1.6;
+        }
+
+        .redirect-notice strong {
+            color: var(--text);
+        }
+
         @media (max-width: 920px) {
             .hero,
             .grid {
@@ -275,6 +290,11 @@
 </head>
 <body>
     <main class="page">
+        <div class="redirect-notice" id="redirectNotice">
+            <strong>FireLauncher has moved.</strong> You are being redirected to the current download site at
+            <a href="https://firelauncher.3hpm.ca/" id="canonicalLink">firelauncher.3hpm.ca</a>.
+        </div>
+
         <section class="hero">
             <div class="hero-copy">
                 <div class="eyebrow">FireLauncher Releases</div>
@@ -362,6 +382,8 @@
         </p>
     </main>
     <script>
+        const canonicalUrl = "https://firelauncher.3hpm.ca/";
+        const allowedHosts = new Set(["firelauncher.3hpm.ca", "www.firelauncher.3hpm.ca"]);
         const fallbackRelease = {
             version: "1.1.0 beta",
             sizeBytes: 15439260,
@@ -370,6 +392,31 @@
             downloadUrl: "https://github.com/chreid1973/FIRELAUNCHER/releases",
             releaseUrl: "https://github.com/chreid1973/FIRELAUNCHER/releases"
         };
+
+        function redirectToCanonicalHostIfNeeded() {
+            const host = window.location.hostname.toLowerCase();
+            const isLocalFile = window.location.protocol === "file:";
+            if (isLocalFile || allowedHosts.has(host)) {
+                return;
+            }
+
+            const redirectNotice = document.getElementById("redirectNotice");
+            const canonicalLink = document.getElementById("canonicalLink");
+            canonicalLink.href = canonicalUrl;
+            redirectNotice.style.display = "block";
+
+            const target = new URL(canonicalUrl);
+            if (window.location.search) {
+                target.search = window.location.search;
+            }
+            if (window.location.hash) {
+                target.hash = window.location.hash;
+            }
+
+            window.setTimeout(() => {
+                window.location.replace(target.toString());
+            }, 1200);
+        }
 
         function formatSize(sizeBytes) {
             if (!Number.isFinite(sizeBytes) || sizeBytes <= 0) {
@@ -416,6 +463,7 @@
             }
         }
 
+        redirectToCanonicalHostIfNeeded();
         loadReleaseData();
     </script>
 </body>
