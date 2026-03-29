@@ -1,0 +1,6 @@
+$webhook = "https://discordapp.com/api/webhooks/1487893848309895200/QRNF_z9JKzDSK9bT6PKMTqO2GmEgmN-lziPcFJiaNMw2YlXr54OGUaL85nVOioYM_rr5"
+$body = @{
+  content = "New FireLauncher test build is live.`nVersion: 1.1.0 beta`nDownload: https://3hpm.ca/ppv/"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri $webhook -Method Post -ContentType "application/json" -Body $body

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FireLauncher Test Build</title>
+    <meta
+        name="description"
+        content="Download the latest FireLauncher test APK for Fire TV and Android TV."
+    >
+    <style>
+        :root {
+            --bg: #08111b;
+            --bg-soft: rgba(16, 28, 42, 0.88);
+            --panel: rgba(14, 23, 34, 0.82);
+            --panel-strong: rgba(10, 18, 28, 0.9);
+            --border: rgba(170, 197, 226, 0.12);
+            --text: #f4f7fb;
+            --muted: #9eb0c3;
+            --soft: #c8d4e0;
+            --accent: #73b6ff;
+            --accent-strong: #4c9aff;
+            --success: #86d1a2;
+            --shadow: 0 26px 70px rgba(0, 0, 0, 0.38);
+            --radius: 28px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(88, 141, 211, 0.25), transparent 32%),
+                radial-gradient(circle at top right, rgba(137, 179, 227, 0.12), transparent 28%),
+                linear-gradient(180deg, #08111b 0%, #09131f 42%, #0b1622 100%);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        .page {
+            width: min(1120px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 40px 0 64px;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 28px;
+            align-items: center;
+        }
+
+        .hero-copy,
+        .hero-preview,
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(12px);
+        }
+
+        .hero-copy {
+            padding: 34px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(115, 182, 255, 0.28);
+            background: rgba(115, 182, 255, 0.1);
+            color: #d6e9ff;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 18px 0 12px;
+            font-size: clamp(34px, 6vw, 60px);
+            line-height: 0.96;
+            letter-spacing: -0.04em;
+        }
+
+        .lead {
+            margin: 0;
+            color: var(--soft);
+            font-size: 18px;
+            line-height: 1.6;
+            max-width: 640px;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin: 24px 0 28px;
+        }
+
+        .meta-card {
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .meta-label {
+            display: block;
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .meta-value {
+            display: block;
+            margin-top: 8px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 54px;
+            padding: 0 24px;
+            border-radius: 18px;
+            border: 1px solid transparent;
+            font-size: 16px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: transform 120ms ease, filter 120ms ease, border-color 120ms ease;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.04);
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+            color: #05131f;
+        }
+
+        .button-secondary {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+        }
+
+        .tiny-note {
+            margin-top: 16px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .hero-preview {
+            padding: 18px;
+        }
+
+        .hero-preview img {
+            display: block;
+            width: 100%;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 24px;
+            margin-top: 28px;
+        }
+
+        .panel {
+            padding: 26px;
+        }
+
+        .panel h2 {
+            margin: 0 0 14px;
+            font-size: 24px;
+            letter-spacing: -0.03em;
+        }
+
+        .steps,
+        .notes {
+            margin: 0;
+            padding-left: 20px;
+            color: var(--soft);
+            line-height: 1.7;
+        }
+
+        .steps li,
+        .notes li {
+            margin-bottom: 10px;
+        }
+
+        .callout {
+            margin-top: 18px;
+            padding: 16px 18px;
+            border-radius: 18px;
+            background: rgba(134, 209, 162, 0.08);
+            border: 1px solid rgba(134, 209, 162, 0.18);
+            color: #dff7e6;
+            line-height: 1.6;
+        }
+
+        code {
+            display: block;
+            margin-top: 14px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: var(--panel-strong);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #dbe7f5;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        .footer {
+            margin-top: 20px;
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.7;
+            text-align: center;
+        }
+
+        @media (max-width: 920px) {
+            .hero,
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page {
+                width: min(100% - 20px, 1120px);
+                padding-top: 20px;
+                padding-bottom: 32px;
+            }
+
+            .hero-copy,
+            .hero-preview,
+            .panel {
+                padding: 20px;
+            }
+
+            .meta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="hero">
+            <div class="hero-copy">
+                <div class="eyebrow">FireLauncher Test Build</div>
+                <h1>Download FireLauncher for testing</h1>
+                <p class="lead">
+                    This is a test APK for Fire TV and Android TV users. Install it manually,
+                    open it like a normal app, and send feedback on layout, navigation,
+                    performance, wallpapers, and overall polish.
+                </p>
+
+                <div class="meta-grid">
+                    <div class="meta-card">
+                        <span class="meta-label">Version</span>
+                        <span class="meta-value">1.1.0 beta</span>
+                    </div>
+                    <div class="meta-card">
+                        <span class="meta-label">APK Size</span>
+                        <span class="meta-value">15.439 MB</span>
+                    </div>
+                    <div class="meta-card">
+                        <span class="meta-label">Updated</span>
+                        <span class="meta-value">March 29, 2026</span>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <a class="button button-primary" href="./app-release.apk" download>
+                        Download APK
+                    </a>
+                    <a class="button button-secondary" href="https://3hpm.ca/ppv/launcher-preview.png" target="_blank" rel="noopener">
+                        View Screenshot
+                    </a>
+                </div>
+
+                <p class="tiny-note">
+                    Package name: <strong>com.threehpm.firelauncher</strong><br>
+                    If you previously installed an older debug or differently signed build,
+                    uninstall that version first before installing this test release.
+                </p>
+            </div>
+
+            <div class="hero-preview">
+                <img src="./launcher-preview.png" alt="FireLauncher home screen preview">
+            </div>
+        </section>
+
+        <section class="grid">
+            <article class="panel">
+                <h2>Install Instructions</h2>
+                <ol class="steps">
+                    <li>Open this page on your Fire TV or Android TV device using Downloader, Silk, or another browser.</li>
+                    <li>Select <strong>Download APK</strong> and wait for the file to finish downloading.</li>
+                    <li>If your device blocks the install, allow installs from unknown apps for the browser or downloader you are using.</li>
+                    <li>Open the downloaded APK and complete the installation.</li>
+                    <li>Launch FireLauncher from your apps list and begin testing.</li>
+                </ol>
+
+                <div class="callout">
+                    Best first test: install it, open it as a normal app, and verify that the
+                    home layout, favourites, settings access, weather, wallpapers, and PPV feeds
+                    load correctly on your device.
+                </div>
+            </article>
+
+            <aside class="panel">
+                <h2>Tester Notes</h2>
+                <ul class="notes">
+                    <li>This is a manual test build intended for Fire TV and Android TV devices.</li>
+                    <li>Internet access is recommended for weather, live wallpapers, and PPV listings.</li>
+                    <li>Using it as the main launcher depends on device and OS restrictions.</li>
+                    <li>Future updates should install over this build as long as the signing key stays the same.</li>
+                </ul>
+
+                <h2 style="margin-top: 24px;">SHA-256</h2>
+                <code>46446F5171C6F87A7E42D1940BDB8E5B9ACDC1749416E918520336968CA78A8C</code>
+            </aside>
+        </section>
+
+        <p class="footer">
+            FireLauncher test distribution page. If you have trouble installing, confirm that your
+            device allows APK installs from your downloader or browser app first.
+        </p>
+    </main>
+</body>
+</html>

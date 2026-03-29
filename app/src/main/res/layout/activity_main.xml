@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black"
+    android:clipChildren="false">
+
+    <ImageView
+        android:id="@+id/wallpaperPrimary"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:adjustViewBounds="false"
+        android:alpha="0.96"
+        android:contentDescription="@null"
+        android:scaleType="centerCrop"
+        android:src="@drawable/launcher_bg" />
+
+    <ImageView
+        android:id="@+id/wallpaperSecondary"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:adjustViewBounds="false"
+        android:alpha="0"
+        android:contentDescription="@null"
+        android:scaleType="centerCrop" />
+
+    <View
+        android:id="@+id/focusBackdrop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0" />
+
+    <View
+        android:id="@+id/ambientGlow"
+        android:layout_width="520dp"
+        android:layout_height="520dp"
+        android:layout_gravity="center|end"
+        android:alpha="0.12"
+        android:background="@drawable/ambient_glow" />
+
+    <View
+        android:id="@+id/ambientSweep"
+        android:layout_width="420dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_vertical|start"
+        android:alpha="0.08"
+        android:background="@drawable/ambient_sweep" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/background_scrim" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="22dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="58dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="62dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/top_info_chip_bg"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
+
+                    <TextView
+                        android:id="@+id/timeText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-black"
+                        android:text="12:00"
+                        android:textColor="@color/text_primary"
+                        android:gravity="center"
+                        android:textSize="20sp" />
+
+                    <TextView
+                        android:id="@+id/dateText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:fontFamily="sans-serif-medium"
+                        android:gravity="center"
+                        android:text="Friday, Mar 27"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="10sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="62dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/top_info_chip_bg"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
+
+                    <TextView
+                        android:id="@+id/weatherPrimaryText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:gravity="center"
+                        android:text="--"
+                        android:textColor="@color/text_primary"
+                        android:textSize="17sp" />
+
+                    <TextView
+                        android:id="@+id/weatherSecondaryText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:ellipsize="end"
+                        android:fontFamily="sans-serif-medium"
+                        android:gravity="center"
+                        android:maxLines="1"
+                        android:text="Checking local conditions"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/weatherLocationText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:ellipsize="end"
+                        android:fontFamily="sans-serif-medium"
+                        android:gravity="center"
+                        android:maxLines="1"
+                        android:text="Local Weather"
+                        android:textColor="@color/text_muted"
+                        android:textSize="9sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="62dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/top_info_chip_bg"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
+
+                    <TextView
+                        android:id="@+id/storagePrimaryText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:gravity="center"
+                        android:text="--"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp" />
+
+                    <TextView
+                        android:id="@+id/storageSecondaryText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="1dp"
+                        android:fontFamily="sans-serif-light"
+                        android:gravity="center"
+                        android:maxLines="1"
+                        android:text="Internal storage"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="9sp" />
+                </LinearLayout>
+
+                <FrameLayout
+                    android:id="@+id/utilityPill"
+                    android:layout_width="0dp"
+                    android:layout_height="62dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/utility_pill_bg"
+                    android:clickable="true"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
+                    android:paddingStart="16dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="10dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:orientation="horizontal"
+                        android:visibility="gone">
+
+                        <View
+                            android:id="@+id/networkStatusDot"
+                            android:layout_width="10dp"
+                            android:layout_height="10dp"
+                            android:layout_marginEnd="8dp"
+                            android:background="@drawable/status_chip_bg" />
+
+                        <TextView
+                            android:id="@+id/networkStatusText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-medium"
+                            android:gravity="center"
+                            android:text="Online"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/settingsQuickIcon"
+                        android:layout_width="308dp"
+                        android:layout_height="76dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@string/quick_settings"
+                        android:scaleType="fitCenter" />
+                </FrameLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/heroContainer"
+            android:layout_width="match_parent"
+            android:layout_height="228dp"
+            android:layout_marginTop="14dp"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:visibility="gone">
+
+            <View
+                android:id="@+id/heroTextScrim"
+                android:layout_width="500dp"
+                android:layout_height="match_parent"
+                android:background="@drawable/hero_text_scrim" />
+
+            <LinearLayout
+                android:id="@+id/heroContent"
+                android:layout_width="470dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|start"
+                android:gravity="bottom"
+                android:orientation="vertical"
+                android:paddingStart="10dp"
+                android:paddingTop="18dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="8dp">
+
+                <TextView
+                    android:id="@+id/heroEyebrow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/status_chip_bg"
+                    android:fontFamily="sans-serif-medium"
+                    android:paddingStart="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="4dp"
+                    android:text="Trending Now"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="10sp" />
+
+                <ImageView
+                    android:id="@+id/heroLogo"
+                    android:layout_width="320dp"
+                    android:layout_height="112dp"
+                    android:layout_marginTop="14dp"
+                    android:adjustViewBounds="true"
+                    android:contentDescription="@null"
+                    android:scaleType="fitStart"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/heroTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:fontFamily="sans-serif-black"
+                    android:lineSpacingExtra="-2sp"
+                    android:maxLines="2"
+                    android:shadowColor="#B0000000"
+                    android:shadowDx="0"
+                    android:shadowDy="4"
+                    android:shadowRadius="18"
+                    android:text="Featured Title"
+                    android:textColor="@color/text_primary"
+                    android:textSize="42sp" />
+
+                <TextView
+                    android:id="@+id/heroMetaPrimary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-medium"
+                    android:maxLines="1"
+                    android:text="Horror • 2026 • 1h39m • TMDB 64%"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/heroMetaSecondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-medium"
+                    android:maxLines="1"
+                    android:text="Cast • Director"
+                    android:textColor="@color/text_muted"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/heroOverview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-light"
+                    android:lineSpacingExtra="2sp"
+                    android:maxLines="3"
+                    android:text="Overview"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <ScrollView
+            android:id="@+id/appRowsScroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="10dp"
+            android:layout_weight="1"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:fadeScrollbars="false"
+            android:fillViewport="false"
+            android:overScrollMode="never"
+            android:paddingBottom="20dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/appRowsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:gravity="top"
+                android:orientation="vertical"
+                android:paddingStart="0dp"
+                android:paddingTop="2dp"
+                android:paddingEnd="0dp"
+                android:paddingBottom="18dp" />
+        </ScrollView>
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/tickerBar"
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/ticker_bar_bg"
+        android:clickable="true"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tickerLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="14dp"
+                android:fontFamily="sans-serif-medium"
+                android:text="PPV Listings"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tickerText"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:ellipsize="marquee"
+                android:fadingEdge="horizontal"
+                android:focusable="false"
+                android:focusableInTouchMode="false"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center_vertical"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:scrollHorizontally="true"
+                android:singleLine="true"
+                android:text="Loading PPV listings..."
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </FrameLayout>
+
+</FrameLayout>

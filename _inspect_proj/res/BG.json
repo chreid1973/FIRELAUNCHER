@@ -1,0 +1,65 @@
+{
+  "product": "Projectivy Launcher",
+  "author": "Spocky",
+  "version": 3,
+  "releaseDate": "2025-02-01T00:00:00.000Z",
+  "installPackages": [
+    {
+      "name": "[Wallpaper Plugin] Overflight",
+      "url": "https://github.com/spocky/projectivy-plugin-wallpaper-overflight/releases/download/1.10/ProjectivyPlugin-Overflight-1.10-c3-generic-release.apk",
+      "__package": "tv.projectivy.plugin.wallpaperprovider.overflight"
+    },
+    {
+      "name": "[Wallpaper Plugin] Bing Wallpaper",
+      "url": "https://github.com/spocky/projectivy-plugin-wallpaper-bingwallpaper/releases/download/1.01/ProjectivyPlugin-BingWallpaper-1.01-c2-generic-release.apk",
+      "__package": "tv.projectivy.plugin.wallpaperprovider.bingwallpaper"
+    },
+    {
+      "name": "[Icon Pack] Arcticons Day&Night",
+      "url": "https://github.com/Arcticons-Team/Arcticons/releases/download/12.2.0/Arcticons-12.2.0-dayNight-release.apk",
+      "__package": "com.donnnno.arcticons.daynight"
+    },
+    {
+      "name": "Aptoide Tv Store",
+      "url": "https://pool.apk.aptoide.com/rmota/cm-aptoidetv-pt-531-51848782-48fb019529cdd750d20693710da30fbc.apk"
+    },
+    {
+      "name": "LocalSend",
+      "package": "org.localsend.localsend_app"
+    },
+    {
+      "name": "Downloader by AFTVnews",
+      "url": "https://www.aftvnews.com/downloader.apk",
+      "package": "com.esaba.downloader"
+    },
+    {
+      "name": "MiXplorer",
+      "url": "https://github.com/driftywinds/mixplorer-releases/releases/download/v6.68.4_B24112320/MiXplorer_v6.68.4_B24112320.apk",
+      "package": "com.mixplorer"
+    },
+    {
+      "name": "MiXplorer Silver",
+      "package": "com.mixplorer.silver"
+    },
+    {
+      "name": "File Manager Plus",
+      "package": "com.alphainventor.filemanager"
+    },
+    {
+      "name": "tvQuickActions",
+      "package": "dev.vodik7.tvquickactions.free"
+    },
+    {
+      "name": "LeanbackIme Keyboard",
+      "url": "https://gitlab.incom.co/CM-Shield/proprietary_vendor_nvidia/raw/4be705a39b5a6f6165cf3b6cca856a817ab7886d/shield_common/proprietary/priv-app/LeanbackIme/LeanbackIme.apk"
+    },
+    {
+      "name": "MoreLocale 2.4.5",
+      "package": "jp.co.c_lis.ccl.morelocale"
+    },
+    {
+      "name": "Notifications for Android Tv",
+      "package": "de.cyberdream.androidtv.notifications.google"
+    }
+  ]
+}

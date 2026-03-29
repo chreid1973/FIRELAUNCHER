@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>3HPM Sports Feed Builder</title>
+    <style>
+        :root {
+            --bg: #efe4d3;
+            --panel: rgba(22, 16, 12, 0.92);
+            --panel-soft: rgba(39, 29, 22, 0.82);
+            --border: rgba(255, 238, 219, 0.1);
+            --text: #f8efe4;
+            --text-soft: #cbbba8;
+            --muted: #9a8a7a;
+            --accent: #ff925b;
+            --accent-2: #f3bb57;
+            --good: #67d39d;
+            --bad: #f26e66;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(255, 146, 91, 0.18), transparent 28%),
+                radial-gradient(circle at top right, rgba(94, 182, 255, 0.14), transparent 26%),
+                linear-gradient(180deg, var(--bg), #e2d2bb);
+        }
+        .shell {
+            width: min(1320px, calc(100vw - 24px));
+            margin: 12px auto;
+            padding: 24px;
+            border-radius: 30px;
+            background: linear-gradient(180deg, rgba(31, 23, 18, 0.95), rgba(14, 10, 8, 0.98));
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+        }
+        .hero, .controls, .panel {
+            padding: 20px;
+            border-radius: 24px;
+            background: linear-gradient(180deg, var(--panel-soft), var(--panel));
+            border: 1px solid var(--border);
+        }
+        .hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.95fr);
+            gap: 18px;
+            align-items: end;
+        }
+        .eyebrow {
+            display: inline-block;
+            padding: 7px 11px;
+            border-radius: 999px;
+            background: rgba(255, 146, 91, 0.12);
+            color: #ffd6c4;
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        h1 {
+            margin: 12px 0 8px;
+            font-size: clamp(34px, 4vw, 54px);
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+        }
+        p { margin: 0; color: var(--text-soft); line-height: 1.6; }
+        .note {
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .note strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #ffe2d2;
+            font-size: 12px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .note ul, .issue-list, .check-list { margin: 0; padding-left: 18px; color: var(--text-soft); line-height: 1.6; }
+        .controls, .panel { margin-top: 18px; }
+        .grid-5, .grid-2 {
+            display: grid;
+            gap: 14px;
+        }
+        .grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end; }
+        .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .stats,
+        .feed-grid {
+            display: grid;
+            gap: 12px;
+        }
+        .stats { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); margin-top: 16px; }
+        .feed-grid { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-soft);
+            font-size: 12px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        input, textarea {
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            background: rgba(255, 250, 245, 0.06);
+            color: var(--text);
+            padding: 13px 14px;
+            font: inherit;
+        }
+        textarea { min-height: 260px; resize: vertical; line-height: 1.45; }
+        .output-box { min-height: 210px; font-family: Consolas, "Courier New", monospace; font-size: 13px; }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: rgba(243, 187, 87, 0.4);
+            box-shadow: 0 0 0 3px rgba(243, 187, 87, 0.1);
+        }
+        .actions, .feed-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        button {
+            border: none;
+            border-radius: 999px;
+            padding: 12px 16px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        button:hover:not(:disabled) { filter: brightness(1.04); }
+        button:disabled { opacity: 0.45; cursor: not-allowed; }
+        .primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #21140c; }
+        .secondary { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+        .stat {
+            padding: 14px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .stat strong { display: block; font-size: 24px; }
+        .stat span {
+            display: block;
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .badge {
+            display: inline-block;
+            padding: 7px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+        .ok { background: rgba(103, 211, 157, 0.12); color: #bdf2d3; }
+        .warn { background: rgba(242, 110, 102, 0.12); color: #ffc3be; }
+        .neutral { background: rgba(255, 255, 255, 0.08); color: var(--text-soft); }
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .section-head h2, .section-head h3 { margin: 0; }
+        .status-line, .help-line { margin-top: 12px; color: var(--text-soft); }
+        .help-line { color: var(--muted); font-size: 13px; }
+        .publish-status {
+            margin-top: 10px;
+            color: var(--text-soft);
+            font-size: 14px;
+        }
+        .table-wrap {
+            overflow: auto;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            margin-bottom: 12px;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 14px;
+        }
+        th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+        tr:last-child td { border-bottom: none; }
+        code { color: #ffe4cf; }
+        .feed-card {
+            padding: 18px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        @media (max-width: 1040px) {
+            .hero, .grid-5, .grid-2 { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 980px) {
+            .shell { width: min(calc(100vw - 12px), 1320px); padding: 14px; border-radius: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="shell">
+        <section class="hero">
+            <div>
+                <div class="eyebrow">3HPM Sports Feed Workflow</div>
+                <h1>Paste once. Build every sports feed.</h1>
+                <p>Paste the raw daily sports block, preview what was parsed, then either publish directly to the hosted feed files or save fallback copies for FTP upload into your live <code>/ppv/</code> folder.</p>
+            </div>
+            <aside class="note">
+                <strong>Accepted lines</strong>
+                <ul>
+                    <li><code>PPV2 01: 09:00 PDRA Carolina Nationals</code></li>
+                    <li><code>NHL 01: 13:00 Senators @ Lightning</code></li>
+                    <li><code>MLB 01: 13:15 Rays X Cardinals</code></li>
+                    <li><code>NBA 01: 13:55 San Antonio Spurs @ Milwaukee Bucks</code></li>
+                    <li>Header lines like <code>NHL - MAR 28TH - ET</code> are ignored automatically.</li>
+                </ul>
+            </aside>
+        </section>
+
+        <section class="controls">
+            <div class="grid-5">
+                <div>
+                    <label for="feedDate">Feed Date</label>
+                    <input id="feedDate" type="date">
+                </div>
+                <div>
+                    <label for="feedTimezone">Timezone</label>
+                    <input id="feedTimezone" type="text" value="America/New_York">
+                </div>
+                <div>
+                    <label for="ftpPath">FTP Folder</label>
+                    <input id="ftpPath" type="text" value="/ppv/">
+                </div>
+                <div>
+                    <label for="publishSecret">Publish Secret</label>
+                    <input id="publishSecret" type="password" placeholder="Not stored in the browser">
+                </div>
+                <div class="actions">
+                    <button id="parseButton" class="primary" type="button">Parse Listings</button>
+                    <button id="publishReadyButton" class="primary" type="button" disabled>Publish Ready Feeds</button>
+                    <button id="resetButton" class="secondary" type="button">Clear</button>
+                </div>
+            </div>
+
+            <div class="stats">
+                <div class="stat"><strong id="totalEvents">0</strong><span>Total Events</span></div>
+                <div class="stat"><strong id="ppv1Count">0</strong><span>PPV 1</span></div>
+                <div class="stat"><strong id="ppv2Count">0</strong><span>PPV 2</span></div>
+                <div class="stat"><strong id="nhlCount">0</strong><span>NHL</span></div>
+                <div class="stat"><strong id="mlbCount">0</strong><span>MLB</span></div>
+                <div class="stat"><strong id="nbaCount">0</strong><span>NBA</span></div>
+                <div class="stat"><strong id="invalidCount">0</strong><span>Needs Review</span></div>
+            </div>
+
+            <div class="status-line"><strong>Current targets:</strong> <span id="targetSummary"></span></div>
+            <div class="help-line">Paste mixed PPV, NHL, MLB, and NBA blocks into one textarea. The page splits them automatically by channel code.</div>
+            <div id="publishStatus" class="publish-status">Direct publish is idle. Leave the save buttons as a fallback if the server script is unavailable.</div>
+        </section>
+
+        <section class="panel">
+            <div class="section-head">
+                <h2>Combined Raw Listings</h2>
+                <span class="badge neutral">Auto-split by feed</span>
+            </div>
+            <label for="rawInput">Paste the raw daily listing block</label>
+            <textarea id="rawInput" spellcheck="false" placeholder="PPV2 01: 09:00 PDRA Carolina Nationals&#10;NHL 01: 13:00 Senators @ Lightning&#10;MLB 01: 13:15 Rays X Cardinals&#10;NBA 01: 13:55 San Antonio Spurs @ Milwaukee Bucks"></textarea>
+        </section>
+
+        <section class="panel">
+            <div class="grid-2">
+                <div>
+                    <div class="section-head">
+                        <h3>Parse Issues</h3>
+                        <span id="issuesBadge" class="badge ok">No issues</span>
+                    </div>
+                    <ol id="issuesList" class="issue-list"></ol>
+                </div>
+                <div>
+                    <div class="section-head">
+                        <h3>Upload Checklist</h3>
+                        <span class="badge neutral">Hosted workflow</span>
+                    </div>
+                    <ul class="check-list">
+                        <li>Paste the combined sports listing block.</li>
+                        <li>Review any flagged lines before saving.</li>
+                        <li>Enter the same publish secret configured in <code>save.php</code>.</li>
+                        <li>Use direct publish or save the files locally as a fallback.</li>
+                        <li>If you save locally, upload them to your live sports folder with FTP.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="section-head">
+                <h2>Generated Feed Outputs</h2>
+                <span id="outputsBadge" class="badge neutral">Waiting for parse</span>
+            </div>
+            <div id="feedOutputs" class="feed-grid"></div>
+        </section>
+    </main>
+
+    <script>
+        const STORAGE_KEY = "sports-feed-admin-state-v1";
+        const SAVE_ENDPOINT = "save.php";
+        const HEADER_PATTERN = /^(PPV(?:\s*[12])?|NHL|MLB|NBA)\s*-\s*.+$/i;
+        const LINE_PATTERN = /^(PPV(?:2|1)?\s*\d{2}|PPV\d{2}|NHL\s*\d{2}|MLB\s*\d{2}|NBA\s*\d{2})\s*:\s*(\d{2}:\d{2})\s+(.+)$/i;
+        const FEEDS = [
+            { key: "ppv1", label: "PPV 1", filename: "events_ppv_1.json" },
+            { key: "ppv2", label: "PPV 2", filename: "events_ppv_2.json" },
+            { key: "nhl", label: "NHL", filename: "events_nhl.json" },
+            { key: "mlb", label: "MLB", filename: "events_mlb.json" },
+            { key: "nba", label: "NBA", filename: "events_nba.json" }
+        ];
+
+        const els = {
+            feedDate: document.getElementById("feedDate"),
+            feedTimezone: document.getElementById("feedTimezone"),
+            ftpPath: document.getElementById("ftpPath"),
+            publishSecret: document.getElementById("publishSecret"),
+            rawInput: document.getElementById("rawInput"),
+            parseButton: document.getElementById("parseButton"),
+            publishReadyButton: document.getElementById("publishReadyButton"),
+            resetButton: document.getElementById("resetButton"),
+            totalEvents: document.getElementById("totalEvents"),
+            ppv1Count: document.getElementById("ppv1Count"),
+            ppv2Count: document.getElementById("ppv2Count"),
+            nhlCount: document.getElementById("nhlCount"),
+            mlbCount: document.getElementById("mlbCount"),
+            nbaCount: document.getElementById("nbaCount"),
+            invalidCount: document.getElementById("invalidCount"),
+            targetSummary: document.getElementById("targetSummary"),
+            publishStatus: document.getElementById("publishStatus"),
+            issuesBadge: document.getElementById("issuesBadge"),
+            issuesList: document.getElementById("issuesList"),
+            outputsBadge: document.getElementById("outputsBadge"),
+            feedOutputs: document.getElementById("feedOutputs")
+        };
+
+        const feedEls = {};
+
+        function emptyFeedMap() {
+            return Object.fromEntries(FEEDS.map(function(feed) {
+                return [feed.key, []];
+            }));
+        }
+
+        function emptyJsonMap() {
+            return Object.fromEntries(FEEDS.map(function(feed) {
+                return [feed.key, ""];
+            }));
+        }
+
+        let build = { feeds: emptyFeedMap(), issues: [], jsonByFeed: emptyJsonMap() };
+
+        function localDateString() {
+            const now = new Date();
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, "0");
+            const d = String(now.getDate()).padStart(2, "0");
+            return y + "-" + m + "-" + d;
+        }
+
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                feedDate: els.feedDate.value,
+                feedTimezone: els.feedTimezone.value,
+                ftpPath: els.ftpPath.value,
+                rawInput: els.rawInput.value
+            }));
+        }
+
+        function loadState() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) {
+                els.feedDate.value = localDateString();
+                updateTargetSummary();
+                return;
+            }
+
+            try {
+                const state = JSON.parse(raw);
+                els.feedDate.value = state.feedDate || localDateString();
+                els.feedTimezone.value = state.feedTimezone || "America/New_York";
+                els.ftpPath.value = state.ftpPath || "/ppv/";
+                els.rawInput.value = state.rawInput || "";
+            } catch (_) {
+                els.feedDate.value = localDateString();
+                els.feedTimezone.value = "America/New_York";
+                els.ftpPath.value = "/ppv/";
+                els.rawInput.value = "";
+            }
+
+            updateTargetSummary();
+        }
+
+        function updateTargetSummary() {
+            let path = (els.ftpPath.value || "/ppv/").trim() || "/ppv/";
+            if (!path.endsWith("/")) {
+                path += "/";
+            }
+            els.targetSummary.textContent = FEEDS.map(function(feed) {
+                return path + feed.filename;
+            }).join(", ");
+        }
+
+        function normalizeChannel(raw) {
+            return raw.replace(/\s+/g, " ").trim().toUpperCase();
+        }
+
+        function normalizeTitle(raw) {
+            return raw.replace(/\s+/g, " ").trim();
+        }
+
+        function validTime(value) {
+            const match = /^(\d{2}):(\d{2})$/.exec(value);
+            if (!match) return false;
+            const h = Number(match[1]);
+            const m = Number(match[2]);
+            return h >= 0 && h <= 23 && m >= 0 && m <= 59;
+        }
+
+        function feedForChannel(channel) {
+            const compact = channel.replace(/\s+/g, "").toUpperCase();
+            if (/^PPV2\d{2}$/.test(compact)) return "ppv2";
+            if (/^PPV\d{2}$/.test(compact) || /^PPV1\d{2}$/.test(compact)) return "ppv1";
+            if (/^NHL\d{2}$/.test(compact)) return "nhl";
+            if (/^MLB\d{2}$/.test(compact)) return "mlb";
+            if (/^NBA\d{2}$/.test(compact)) return "nba";
+            return null;
+        }
+
+        function payload(events) {
+            return {
+                date: els.feedDate.value,
+                timezone: els.feedTimezone.value.trim(),
+                events: events
+            };
+        }
+
+        function parseListings() {
+            const feeds = emptyFeedMap();
+            const issues = [];
+            const lines = els.rawInput.value.replace(/\r/g, "").split("\n");
+
+            if (!els.feedDate.value) issues.push("Feed date is required.");
+            if (!els.feedTimezone.value.trim()) issues.push("Timezone is required.");
+
+            lines.forEach(function(line, index) {
+                const trimmed = line.trim();
+                if (!trimmed || HEADER_PATTERN.test(trimmed)) return;
+
+                const match = trimmed.match(LINE_PATTERN);
+                if (!match) {
+                    issues.push("Line " + (index + 1) + " could not be parsed: " + trimmed);
+                    return;
+                }
+
+                const channel = normalizeChannel(match[1]);
+                const time = match[2];
+                const title = normalizeTitle(match[3]);
+
+                if (!validTime(time)) {
+                    issues.push("Line " + (index + 1) + " has an invalid time: " + time);
+                    return;
+                }
+
+                if (!title) {
+                    issues.push("Line " + (index + 1) + " is missing a title.");
+                    return;
+                }
+
+                const feedKey = feedForChannel(channel);
+                if (!feedKey) {
+                    issues.push("Line " + (index + 1) + " has an unknown channel format: " + channel);
+                    return;
+                }
+
+                feeds[feedKey].push({ channel: channel, time: time, title: title });
+            });
+
+            FEEDS.forEach(function(feed) {
+                warnOnDuplicateChannels(feeds[feed.key], feed.label, issues);
+            });
+
+            const jsonByFeed = emptyJsonMap();
+            FEEDS.forEach(function(feed) {
+                jsonByFeed[feed.key] = feeds[feed.key].length ? JSON.stringify(payload(feeds[feed.key]), null, 2) : "";
+            });
+
+            build = {
+                feeds: feeds,
+                issues: issues,
+                jsonByFeed: jsonByFeed
+            };
+
+            render();
+        }
+
+        function warnOnDuplicateChannels(events, label, issues) {
+            const seen = new Set();
+            events.forEach(function(event) {
+                if (seen.has(event.channel)) {
+                    issues.push(label + " has a duplicate channel: " + event.channel);
+                }
+                seen.add(event.channel);
+            });
+        }
+
+        function render() {
+            const totalEvents = FEEDS.reduce(function(total, feed) {
+                return total + build.feeds[feed.key].length;
+            }, 0);
+            const hasIssues = build.issues.length > 0;
+            const hasEvents = totalEvents > 0;
+            const hasPublishableFeed = FEEDS.some(function(feed) {
+                return Boolean(build.jsonByFeed[feed.key]);
+            });
+
+            els.totalEvents.textContent = String(totalEvents);
+            els.ppv1Count.textContent = String(build.feeds.ppv1.length);
+            els.ppv2Count.textContent = String(build.feeds.ppv2.length);
+            els.nhlCount.textContent = String(build.feeds.nhl.length);
+            els.mlbCount.textContent = String(build.feeds.mlb.length);
+            els.nbaCount.textContent = String(build.feeds.nba.length);
+            els.invalidCount.textContent = String(build.issues.length);
+
+            renderIssues();
+            FEEDS.forEach(function(feed) {
+                renderFeed(feed);
+            });
+
+            els.outputsBadge.textContent = hasEvents ? (hasIssues ? "Parsed with warnings" : "Ready for publish") : "Waiting for parse";
+            els.outputsBadge.className = "badge " + (hasEvents ? (hasIssues ? "warn" : "ok") : "neutral");
+
+            if (!hasEvents) {
+                setPublishStatus("Direct publish is idle. Leave the save buttons as a fallback if the server script is unavailable.", "neutral");
+            } else if (hasIssues) {
+                setPublishStatus("Direct publish is locked until every parse issue is resolved.", "warn");
+            } else {
+                setPublishStatus("Feeds are ready. Publish them directly or save fallback copies.", "ok");
+            }
+
+            els.publishReadyButton.disabled = !hasPublishableFeed || hasIssues;
+        }
+
+        function renderIssues() {
+            els.issuesList.innerHTML = "";
+            if (!build.issues.length) {
+                const item = document.createElement("li");
+                item.textContent = "Everything parsed cleanly.";
+                els.issuesList.appendChild(item);
+                els.issuesBadge.textContent = "No issues";
+                els.issuesBadge.className = "badge ok";
+                return;
+            }
+
+            build.issues.forEach(function(issue) {
+                const item = document.createElement("li");
+                item.textContent = issue;
+                els.issuesList.appendChild(item);
+            });
+            els.issuesBadge.textContent = build.issues.length + " to review";
+            els.issuesBadge.className = "badge warn";
+        }
+
+        function renderFeed(feed) {
+            const refs = feedEls[feed.key];
+            const events = build.feeds[feed.key];
+            refs.tableBody.innerHTML = "";
+
+            if (!events.length) {
+                const row = document.createElement("tr");
+                row.innerHTML = "<td colspan=\"3\">No events parsed for this feed yet.</td>";
+                refs.tableBody.appendChild(row);
+            } else {
+                events.forEach(function(event) {
+                    const row = document.createElement("tr");
+                    row.innerHTML = "<td>" + safe(event.channel) + "</td><td>" + safe(event.time) + "</td><td>" + safe(event.title) + "</td>";
+                    refs.tableBody.appendChild(row);
+                });
+            }
+
+            refs.output.value = build.jsonByFeed[feed.key];
+            refs.badge.textContent = events.length + (events.length === 1 ? " event" : " events");
+            refs.badge.className = "badge " + (events.length ? "ok" : "neutral");
+            refs.copyButton.disabled = !build.jsonByFeed[feed.key];
+            refs.saveButton.disabled = !build.jsonByFeed[feed.key];
+            refs.publishButton.disabled = !build.jsonByFeed[feed.key] || build.issues.length > 0;
+        }
+
+        function safe(value) {
+            return value
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        async function copyText(text, button) {
+            if (!text) return;
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                } else {
+                    const helper = document.createElement("textarea");
+                    helper.value = text;
+                    helper.style.position = "fixed";
+                    helper.style.opacity = "0";
+                    document.body.appendChild(helper);
+                    helper.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(helper);
+                }
+                flash(button, "Copied");
+            } catch (_) {
+                flash(button, "Copy failed");
+            }
+        }
+
+        function saveFile(text, filename, button) {
+            if (!text) return;
+            const blob = new Blob([text], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            flash(button, "Saved");
+        }
+
+        function flash(button, label) {
+            const original = button.textContent;
+            button.textContent = label;
+            setTimeout(function() {
+                button.textContent = original;
+            }, 1200);
+        }
+
+        function setPublishStatus(message, tone) {
+            const resolvedTone = tone || "neutral";
+            els.publishStatus.textContent = message;
+            els.publishStatus.style.color =
+                resolvedTone === "ok" ? "#bdf2d3" :
+                resolvedTone === "warn" ? "#ffc3be" :
+                "var(--text-soft)";
+        }
+
+        async function publishFeed(feedKey, button) {
+            const feed = FEEDS.find(function(candidate) {
+                return candidate.key === feedKey;
+            });
+            const jsonText = build.jsonByFeed[feedKey];
+            const secret = els.publishSecret.value.trim();
+
+            if (!feed) {
+                setPublishStatus("Unknown feed key: " + feedKey, "warn");
+                return false;
+            }
+
+            if (build.issues.length) {
+                setPublishStatus("Fix all parse issues before publishing to the server.", "warn");
+                return false;
+            }
+
+            if (!jsonText) {
+                setPublishStatus("Nothing to publish for " + feed.filename + ".", "warn");
+                return false;
+            }
+
+            if (!secret) {
+                setPublishStatus("Enter the publish secret before sending updates to the server.", "warn");
+                return false;
+            }
+
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = "Publishing...";
+            setPublishStatus("Publishing " + feed.filename + " to " + SAVE_ENDPOINT + "...", "neutral");
+
+            try {
+                const response = await fetch(SAVE_ENDPOINT, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        secret: secret,
+                        feed: feedKey,
+                        payload: JSON.parse(jsonText)
+                    })
+                });
+
+                const result = await response.json().catch(function() {
+                    return { ok: false, message: "The server returned a non-JSON response." };
+                });
+
+                if (!response.ok || !result.ok) {
+                    setPublishStatus(result.message || ("Failed to publish " + feed.filename + "."), "warn");
+                    return false;
+                }
+
+                const backupText = result.backup ? " Backup: " + result.backup : "";
+                setPublishStatus("Published " + feed.filename + " successfully." + backupText, "ok");
+                flash(button, "Published");
+                return true;
+            } catch (error) {
+                setPublishStatus("Publish request failed: " + error.message, "warn");
+                return false;
+            } finally {
+                button.disabled = !jsonText || build.issues.length > 0;
+                button.textContent = originalText;
+            }
+        }
+
+        async function publishReadyFeeds() {
+            const feedsToPublish = FEEDS.filter(function(feed) {
+                return Boolean(build.jsonByFeed[feed.key]);
+            });
+
+            if (build.issues.length) {
+                setPublishStatus("Fix all parse issues before publishing to the server.", "warn");
+                return;
+            }
+
+            if (!feedsToPublish.length) {
+                setPublishStatus("Parse listings before attempting to publish.", "warn");
+                return;
+            }
+
+            const secret = els.publishSecret.value.trim();
+            if (!secret) {
+                setPublishStatus("Enter the publish secret before sending updates to the server.", "warn");
+                return;
+            }
+
+            const originalText = els.publishReadyButton.textContent;
+            els.publishReadyButton.disabled = true;
+            els.publishReadyButton.textContent = "Publishing...";
+
+            let publishedCount = 0;
+            for (const feed of feedsToPublish) {
+                const ok = await publishFeed(feed.key, els.publishReadyButton);
+                if (!ok) {
+                    break;
+                }
+                publishedCount += 1;
+            }
+
+            if (publishedCount === feedsToPublish.length) {
+                setPublishStatus("Published " + publishedCount + " hosted feed file" + (publishedCount === 1 ? "" : "s") + " successfully.", "ok");
+            }
+
+            els.publishReadyButton.disabled = false;
+            els.publishReadyButton.textContent = originalText;
+        }
+
+        function clearAll() {
+            els.feedDate.value = localDateString();
+            els.feedTimezone.value = "America/New_York";
+            els.ftpPath.value = "/ppv/";
+            els.publishSecret.value = "";
+            els.rawInput.value = "";
+            updateTargetSummary();
+            saveState();
+            build = { feeds: emptyFeedMap(), issues: [], jsonByFeed: emptyJsonMap() };
+            setPublishStatus("Direct publish is idle. Leave the save buttons as a fallback if the server script is unavailable.", "neutral");
+            render();
+        }
+
+        function createFeedOutputCard(feed) {
+            const article = document.createElement("article");
+            article.className = "feed-card";
+            article.innerHTML = [
+                "<div class=\"section-head\">",
+                "  <h3>" + safe(feed.label) + "</h3>",
+                "  <span class=\"badge neutral\">0 events</span>",
+                "</div>",
+                "<div class=\"table-wrap\">",
+                "  <table>",
+                "    <thead><tr><th>Channel</th><th>Time</th><th>Title</th></tr></thead>",
+                "    <tbody></tbody>",
+                "  </table>",
+                "</div>",
+                "<textarea class=\"output-box\" readonly spellcheck=\"false\"></textarea>",
+                "<div class=\"feed-actions\">",
+                "  <button class=\"primary\" type=\"button\" disabled>Publish " + safe(feed.label) + "</button>",
+                "  <button class=\"secondary\" type=\"button\" disabled>Copy " + safe(feed.label) + " JSON</button>",
+                "  <button class=\"primary\" type=\"button\" disabled>Save " + safe(feed.filename) + "</button>",
+                "</div>"
+            ].join("");
+
+            const badge = article.querySelector(".badge");
+            const tableBody = article.querySelector("tbody");
+            const output = article.querySelector("textarea");
+            const buttons = article.querySelectorAll("button");
+            const publishButton = buttons[0];
+            const copyButton = buttons[1];
+            const saveButton = buttons[2];
+
+            publishButton.addEventListener("click", function() {
+                publishFeed(feed.key, publishButton);
+            });
+            copyButton.addEventListener("click", function() {
+                copyText(build.jsonByFeed[feed.key], copyButton);
+            });
+            saveButton.addEventListener("click", function() {
+                saveFile(build.jsonByFeed[feed.key], feed.filename, saveButton);
+            });
+
+            els.feedOutputs.appendChild(article);
+            feedEls[feed.key] = {
+                badge: badge,
+                tableBody: tableBody,
+                output: output,
+                publishButton: publishButton,
+                copyButton: copyButton,
+                saveButton: saveButton
+            };
+        }
+
+        FEEDS.forEach(createFeedOutputCard);
+
+        els.parseButton.addEventListener("click", function() {
+            saveState();
+            updateTargetSummary();
+            parseListings();
+        });
+        els.publishReadyButton.addEventListener("click", publishReadyFeeds);
+        els.resetButton.addEventListener("click", clearAll);
+
+        [els.feedDate, els.feedTimezone, els.ftpPath, els.rawInput].forEach(function(input) {
+            input.addEventListener("input", function() {
+                saveState();
+                if (input === els.ftpPath) updateTargetSummary();
+            });
+        });
+
+        loadState();
+        render();
+    </script>
+</body>
+</html>
