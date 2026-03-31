@@ -42,6 +42,7 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
         run: |
           set -euo pipefail
 
@@ -69,6 +70,10 @@ jobs:
 
           if [ -n "${TMDB_API_KEY:-}" ]; then
             echo "threehpm.tmdbApiKey=${TMDB_API_KEY}" >> local.properties
+          fi
+
+          if [ -n "${WEATHER_API_KEY:-}" ]; then
+            echo "threehpm.weatherApiKey=${WEATHER_API_KEY}" >> local.properties
           fi
 
       - name: Build release APK

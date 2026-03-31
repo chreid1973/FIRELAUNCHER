@@ -179,6 +179,7 @@ Required GitHub repository secrets:
 - `ANDROID_KEY_ALIAS`
 - `ANDROID_KEY_PASSWORD`
 - optional: `TMDB_API_KEY`
+- optional: `WEATHER_API_KEY`
 
 The workflow is manual by design. Pushing code does not automatically publish a new APK. A new public release is only published when the release workflow is run.
 
