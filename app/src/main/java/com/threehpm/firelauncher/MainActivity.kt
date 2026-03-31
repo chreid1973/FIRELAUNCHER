@@ -2951,74 +2951,75 @@ class MainActivity : AppCompatActivity() {
 
     private fun fetchWeatherInfo(): WeatherInfo? {
         val weatherQuery = WeatherPrefs.getQuery(this)
-        val weather = if (weatherQuery.isNullOrBlank()) {
-            fetchAutoWeatherInfo()
+        val weatherApiKey = BuildConfig.WEATHER_API_KEY.trim()
+        val weather = if (weatherApiKey.isNotBlank()) {
+            fetchWeatherApiInfo(weatherApiKey, weatherQuery)
+        } else if (weatherQuery.isNullOrBlank()) {
+            fetchLegacyAutoWeatherInfo()
         } else {
-            fetchWeatherInfoForQuery(weatherQuery)
+            fetchLegacyWeatherInfoForQuery(weatherQuery)
         }
         return weather?.also(::cacheWeatherInfo)
     }
 
-    private fun fetchWeatherInfoForQuery(weatherQuery: String): WeatherInfo? {
+    private fun fetchWeatherApiInfo(apiKey: String, weatherQuery: String?): WeatherInfo? {
+        val queryCandidates = buildWeatherApiQueries(weatherQuery)
         repeat(2) { attempt ->
-            val geocodeUrl =
-                "https://geocoding-api.open-meteo.com/v1/search?name=${
-                    Uri.encode(weatherQuery)
-                }&count=1&language=en&format=json"
-            val geocodeConnection = openWeatherConnection(geocodeUrl) ?: return null
-
-            try {
-                val geocodeJson = JSONObject(
-                    geocodeConnection.inputStream.bufferedReader().use { it.readText() }
-                )
-                val geocodeResult = geocodeJson.optJSONArray("results")?.optJSONObject(0)
-                    ?: throw IOException("No location match")
-
-                val latitude = geocodeResult.optDouble("latitude", Double.NaN)
-                val longitude = geocodeResult.optDouble("longitude", Double.NaN)
-                if (latitude.isNaN() || longitude.isNaN()) {
-                    throw IOException("Location match missing coordinates")
+            for (candidate in queryCandidates) {
+                val weatherUrl = buildString {
+                    append("https://api.weatherapi.com/v1/current.json?key=")
+                    append(Uri.encode(apiKey))
+                    append("&q=")
+                    append(Uri.encode(candidate))
+                    append("&aqi=no")
                 }
+                val connection = openWeatherConnection(weatherUrl) ?: return null
 
-                val location = formatOpenMeteoLocation(geocodeResult, weatherQuery)
-                val weatherUnit = WeatherPrefs.getUnit(this)
-                val temperatureUnit =
-                    if (weatherUnit == WeatherUnit.FAHRENHEIT) "fahrenheit" else "celsius"
-                val forecastUrl = buildString {
-                    append("https://api.open-meteo.com/v1/forecast?")
-                    append("latitude=").append(latitude)
-                    append("&longitude=").append(longitude)
-                    append("&current=temperature_2m,apparent_temperature,weather_code,is_day")
-                    append("&temperature_unit=").append(temperatureUnit)
-                    append("&timezone=auto")
-                    append("&forecast_days=1")
-                }
-
-                val forecastConnection = openWeatherConnection(forecastUrl) ?: return null
                 try {
-                    val forecastJson = JSONObject(
-                        forecastConnection.inputStream.bufferedReader().use { it.readText() }
-                    )
-                    val current = forecastJson.optJSONObject("current")
-                        ?: throw IOException("Weather payload missing current conditions")
+                    val responseStream =
+                        if (connection.responseCode in 200..299) {
+                            connection.inputStream
+                        } else {
+                            connection.errorStream ?: connection.inputStream
+                        }
+                    val response = responseStream.bufferedReader().use { it.readText() }
+                    val json = JSONObject(response)
+                    if (json.has("error")) {
+                        continue
+                    }
 
-                    val temperatureValue = current.optDouble("temperature_2m", Double.NaN)
-                    val apparentValue = current.optDouble("apparent_temperature", Double.NaN)
-                    val weatherCode = current.optInt("weather_code", Int.MIN_VALUE)
-                    val isDay = current.optInt("is_day", 1) == 1
+                    val locationJson = json.optJSONObject("location")
+                        ?: throw IOException("Weather payload missing location")
+                    val currentJson = json.optJSONObject("current")
+                        ?: throw IOException("Weather payload missing current conditions")
+                    val conditionText = currentJson.optJSONObject("condition")
+                        ?.optString("text")
+                        ?.takeIf { it.isNotBlank() }
+
+                    val weatherUnit = WeatherPrefs.getUnit(this)
+                    val temperatureValue =
+                        if (weatherUnit == WeatherUnit.FAHRENHEIT) {
+                            currentJson.optDouble("temp_f", Double.NaN)
+                        } else {
+                            currentJson.optDouble("temp_c", Double.NaN)
+                        }
+                    val feelsLikeValue =
+                        if (weatherUnit == WeatherUnit.FAHRENHEIT) {
+                            currentJson.optDouble("feelslike_f", Double.NaN)
+                        } else {
+                            currentJson.optDouble("feelslike_c", Double.NaN)
+                        }
 
                     val summaryParts = mutableListOf<String>()
-                    if (weatherCode != Int.MIN_VALUE) {
-                        summaryParts += describeOpenMeteoWeatherCode(weatherCode, isDay)
-                    }
-                    if (!apparentValue.isNaN()) {
+                    conditionText?.let(summaryParts::add)
+                    if (!feelsLikeValue.isNaN()) {
                         summaryParts += "Feels like ${
-                            formatWeatherTemperature(apparentValue, weatherUnit)
+                            formatWeatherTemperature(feelsLikeValue, weatherUnit)
                         }"
                     }
 
                     return WeatherInfo(
-                        location = location,
+                        location = formatWeatherApiLocation(locationJson),
                         temperature = if (temperatureValue.isNaN()) {
                             "--"
                         } else {
@@ -3026,22 +3027,102 @@ class MainActivity : AppCompatActivity() {
                         },
                         summary = summaryParts.joinToString(" • ").ifBlank { "Current conditions" }
                     )
+                } catch (_: Exception) {
+                    if (attempt == 0) {
+                        Thread.sleep(700L)
+                    }
                 } finally {
-                    forecastConnection.disconnect()
+                    connection.disconnect()
                 }
-            } catch (_: Exception) {
-                if (attempt == 0) {
-                    Thread.sleep(700L)
-                }
-            } finally {
-                geocodeConnection.disconnect()
             }
         }
 
         return null
     }
 
-    private fun fetchAutoWeatherInfo(): WeatherInfo? {
+    private fun buildWeatherApiQueries(weatherQuery: String?): List<String> {
+        if (weatherQuery.isNullOrBlank()) {
+            return listOf("auto:ip")
+        }
+
+        val trimmed = weatherQuery.trim()
+        val normalizedSpace = trimmed.replace(Regex("\\s+"), " ")
+        val withoutComma = normalizedSpace.replace(Regex("\\s*,\\s*"), " ")
+        val withoutCommaNoExtraSpace = withoutComma.replace(Regex("\\s+"), " ")
+        val candidates = linkedSetOf(
+            normalizedSpace,
+            withoutCommaNoExtraSpace
+        )
+
+        // WeatherAPI accepts Canadian postal codes with or without a space.
+        val postalNoSpace = normalizedSpace.replace(" ", "")
+        if (postalNoSpace.length in 5..6) {
+            candidates += postalNoSpace
+        }
+
+        return candidates.toList()
+    }
+
+    private fun fetchLegacyWeatherInfoForQuery(weatherQuery: String): WeatherInfo? {
+        repeat(2) { attempt ->
+            val connection = openWeatherConnection(
+                "https://wttr.in/${Uri.encode(weatherQuery)}?format=j1&lang=en"
+            )
+                ?: return null
+
+            try {
+                val response = connection.inputStream.bufferedReader().use { it.readText() }
+                val json = JSONObject(response)
+                val currentCondition = json.optJSONArray("current_condition")?.optJSONObject(0)
+                    ?: throw IOException("Weather payload missing current condition")
+                val nearestArea = json.optJSONArray("nearest_area")?.optJSONObject(0)
+                val location = nearestArea
+                    ?.optJSONArray("areaName")
+                    ?.optJSONObject(0)
+                    ?.optString("value")
+                    ?.takeIf { it.isNotBlank() }
+                    ?: weatherQuery
+
+                val weatherUnit = WeatherPrefs.getUnit(this)
+                val temperatureKey =
+                    if (weatherUnit == WeatherUnit.FAHRENHEIT) "temp_F" else "temp_C"
+                val feelsLikeKey =
+                    if (weatherUnit == WeatherUnit.FAHRENHEIT) "FeelsLikeF" else "FeelsLikeC"
+
+                val temperature = currentCondition.optString(temperatureKey)
+                    .takeIf { it.isNotBlank() }
+                    ?.let { "$it${weatherUnit.suffix}" }
+                    ?: "--"
+
+                val summaryParts = mutableListOf<String>()
+                currentCondition.optJSONArray("weatherDesc")
+                    ?.optJSONObject(0)
+                    ?.optString("value")
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let(summaryParts::add)
+
+                currentCondition.optString(feelsLikeKey)
+                    .takeIf { it.isNotBlank() }
+                    ?.let { summaryParts += "Feels like ${it}${weatherUnit.suffix}" }
+
+                return WeatherInfo(
+                    location = location,
+                    temperature = temperature,
+                    summary = summaryParts.joinToString(" • ").ifBlank { "Current conditions" }
+                )
+            } catch (_: Exception) {
+                if (attempt == 0) {
+                    Thread.sleep(700L)
+                }
+            } finally {
+                connection.disconnect()
+            }
+        }
+
+        return null
+    }
+
+    private fun fetchLegacyAutoWeatherInfo(): WeatherInfo? {
         repeat(2) { attempt ->
             val connection = openWeatherConnection("https://wttr.in/?format=j1&lang=en")
                 ?: return null
@@ -3113,54 +3194,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun formatOpenMeteoLocation(locationJson: JSONObject, fallbackQuery: String): String {
+    private fun formatWeatherApiLocation(locationJson: JSONObject): String {
         val name = locationJson.optString("name").takeIf { it.isNotBlank() }
-        val admin1 = locationJson.optString("admin1").takeIf { it.isNotBlank() }
+        val region = locationJson.optString("region").takeIf { it.isNotBlank() }
         val country = locationJson.optString("country").takeIf { it.isNotBlank() }
 
         val parts = buildList {
             name?.let(::add)
-            admin1?.takeIf { it != name }?.let(::add)
-            country?.takeIf { it != admin1 }?.let(::add)
+            region?.takeIf { it != name }?.let(::add)
+            country?.takeIf { it != region }?.let(::add)
         }
 
-        return parts.joinToString(", ").ifBlank { fallbackQuery }
+        return parts.joinToString(", ").ifBlank { "Local Weather" }
     }
 
     private fun formatWeatherTemperature(
         value: Double,
         weatherUnit: WeatherUnit
     ): String = "${value.roundToInt()}${weatherUnit.suffix}"
-
-    private fun describeOpenMeteoWeatherCode(code: Int, isDay: Boolean): String {
-        return when (code) {
-            0 -> if (isDay) "Clear sky" else "Clear night"
-            1 -> if (isDay) "Mainly clear" else "Mostly clear"
-            2 -> "Partly cloudy"
-            3 -> "Overcast"
-            45, 48 -> "Fog"
-            51 -> "Light drizzle"
-            53 -> "Drizzle"
-            55 -> "Heavy drizzle"
-            56, 57 -> "Freezing drizzle"
-            61 -> "Light rain"
-            63 -> "Rain"
-            65 -> "Heavy rain"
-            66, 67 -> "Freezing rain"
-            71 -> "Light snow"
-            73 -> "Snow"
-            75 -> "Heavy snow"
-            77 -> "Snow grains"
-            80 -> "Light rain showers"
-            81 -> "Rain showers"
-            82 -> "Heavy rain showers"
-            85 -> "Light snow showers"
-            86 -> "Heavy snow showers"
-            95 -> "Thunderstorm"
-            96, 99 -> "Thunderstorm with hail"
-            else -> "Current conditions"
-        }
-    }
 
     private fun formatSportsTickerText(entries: List<SportsEntry>): String {
         val (liveEntries, upcomingEntries) = splitSportsEntries(entries)

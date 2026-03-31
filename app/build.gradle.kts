@@ -26,6 +26,11 @@ val tmdbApiKey = localProperties
     .replace("\\", "\\\\")
     .replace("\"", "\\\"")
 
+val weatherApiKey = localProperties
+    .getProperty("threehpm.weatherApiKey", "")
+    .replace("\\", "\\\\")
+    .replace("\"", "\\\"")
+
 android {
     namespace = "com.threehpm.firelauncher"
     compileSdk = 34
@@ -38,6 +43,7 @@ android {
         versionName = "1.0"
 
         buildConfigField("String", "TMDB_API_KEY", "\"$tmdbApiKey\"")
+        buildConfigField("String", "WEATHER_API_KEY", "\"$weatherApiKey\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
